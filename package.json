@@ -1,0 +1,23 @@
+{
+  "name": "github-pivotal-status",
+  "version": "1.0.0",
+  "description": "Add Pivotal status checks for GitHub Pull Requests",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quirk0o/github-pivotal-status.git"
+  },
+  "keywords": [
+    "github",
+    "pivotal"
+  ],
+  "author": "quirk0o, zimekx",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/quirk0o/github-pivotal-status/issues"
+  },
+  "homepage": "https://github.com/quirk0o/github-pivotal-status#readme"
+}
