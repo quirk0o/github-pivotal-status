@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/quirk0o/github-pivotal-status/issues"
   },
-  "homepage": "https://github.com/quirk0o/github-pivotal-status#readme"
+  "homepage": "https://github.com/quirk0o/github-pivotal-status#readme",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "github": "^9.2.0",
+    "pivotaltracker": "^0.1.4"
+  }
 }
