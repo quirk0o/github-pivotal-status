@@ -33,46 +33,78 @@ const github = require('github')
 
 const TITLE_PATTERN = /#(\d+)(?=\s)/
 
-exports.githubHook = function (event, context, callback) {
-  console.log(event)
+const githubClient = new github()
+githubClient.authenticate({
+  type: 'token',
+  token: process.env.GITHUB_ACCESS_TOKEN
+})
 
-  const githubClient = new github()
-  githubClient.authenticate({
-    type: 'token',
-    token: process.env.GITHUB_ACCESS_TOKEN
-  })
+const trackerClient = new tracker.Client(process.env.PIVOTAL_ACCESS_TOKEN)
 
-  const trackerClient = new tracker.Client(process.env.PIVOTAL_ACCESS_TOKEN)
+function getPivotalStatus (projectId, storyNumber) {
+  return new Promise((resolve, reject) =>
+    trackerClient
+      .project(projectId)
+      .story(storyNumber)
+      .get((error, story) => {
+          if (error) reject(error)
 
-  const repo = event.repository.name
-  const owner = event.repository.owner.name
-  const sha = event.head_commit.id
-
-  console.log(repo, owner, sha)
-
-  githubClient.pullRequests
-    .getAll({repo, owner, head: sha})
-    .then(({data: prs}) => prs[0])
-    .then(pr => pr.title.match(TITLE_PATTERN)[1])
-    .then(storyNumber => {
-      trackerClient
-        .project(event.params.project_id)
-        .story(storyNumber)
-        .get((error, story) => {
-          console.log(error, story)
           const storyAccepted = story.currentState === 'accepted'
           const state = storyAccepted ? 'success' : 'failure'
           const target_url = story.url
           const description = `Story was ${storyAccepted ? '' : 'not '}accepted`
           const context = 'continuous-integration/pivotal'
 
-          console.log({repo, sha, state, target_url, description, context})
+          resolve({state, target_url, description, context})
+        }
+      ))
+}
 
-          return githubClient.repos.createStatus({repo, owner, sha, state, target_url, description, context})
-            .then(res => {
-              console.log(res)
-              callback(null, {statusCode: 200})
-            })
-        })
-    })
+function createStatus (repo, owner, sha, projectId, storyNumber) {
+  console.log(repo, owner, sha, projectId, storyNumber)
+  return getPivotalStatus(projectId, storyNumber)
+    .then(params =>
+      githubClient.repos.createStatus(Object.assign({repo, owner, sha}, params))
+    )
+}
+
+exports.githubHook = function (event, context, callback) {
+  console.log(event.params)
+  console.log(event.headers)
+  console.log(event)
+
+  const eventType = event.headers['HTTP_X_GITHUB_EVENT']
+
+  const repo = event.repository.name
+  const projectId = event.params.project_id
+
+  if (eventType === 'pull_request') {
+    const prTitle = event.pull_request.title
+    const owner = event.pull_request.head.repo.owner.login
+    const sha = event.pull_request.head.sha
+    const storyNumber = prTitle.match(TITLE_PATTERN)[1]
+
+    createStatus(repo, owner, sha, projectId, storyNumber)
+      .then(res => {
+        console.log(res)
+        callback(null, {statusCode: 200})
+      })
+
+  } else if (eventType === 'push') {
+    const owner = event.repository.owner.name
+    const sha = event.head_commit.id
+
+    console.log(repo, owner, sha)
+
+    githubClient.pullRequests
+      .getAll({repo, owner, head: sha})
+      .then(({data: prs}) => prs[0])
+      .then(pr => pr.title.match(TITLE_PATTERN)[1])
+      .then(storyNumber => createStatus(repo, owner, sha, projectId, storyNumber))
+      .then(res => {
+        console.log(res)
+        callback(null, {statusCode: 200})
+      })
+  }
+
 }
