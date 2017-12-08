@@ -1,0 +1,29 @@
+{ 
+  "kind": "story_update_activity",
+  "guid": "1862675_8217",
+  "project_version": 8217,
+  "message": "Beata Obrok accepted this feature",
+  "highlight": "accepted",
+  "changes":
+  [ { "kind": "story",
+    "change_type": "update",
+    "id": 146162945,
+    "original_values": {},
+    "new_values": {"accepted_at": 1},
+    "name": "Test",
+    "story_type": "feature" } ],
+  "primary_resources":
+  [ { "kind": "story",
+    "id": 146162945,
+    "name": "Test",
+    "story_type": "feature",
+    "url": "https://www.pivotaltracker.com/story/show/146162945" } ],
+  "secondary_resources": [],
+  "project": { "kind": "project", "id": 1862675, "name": "Citymart" },
+  "performed_by":
+  { "kind": "person",
+    "id": 2062541,
+    "name": "Beata Obrok",
+    "initials": "BO" },
+  "occurred_at": 1495812691000
+}

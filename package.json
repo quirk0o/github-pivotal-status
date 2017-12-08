@@ -4,7 +4,9 @@
   "description": "Add Pivotal status checks for GitHub Pull Requests",
   "main": "index.js",
   "scripts": {
-    "test": ""
+    "test": "",
+    "package:github": "zip -r githubHook.zip node_modules githubHook.js",
+    "package:pivotal": "zip -r pivotalHook.zip node_modules pivotalHook.js"
   },
   "repository": {
     "type": "git",

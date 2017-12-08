@@ -2,36 +2,7 @@ const bluebird = require('bluebird')
 const tracker = require('pivotaltracker')
 const github = require('github')
 
-/*
- repo = payload['repository']['full_name']
-
- if event_type == 'pull_request' || event_type == 'push'
- if event_type == 'pull_request'
- pull_request = payload['pull_request']
- pull_request_title = pull_request['title']
- sha = pull_request['head']['sha']
- elsif event_type == 'push'
- sha = payload['head_commit']['id']
- pull_request = github_client.pull_requests(repo, head: sha)[0]
- pull_request_title = pull_request.title
- end
-
- story_id = pull_request_title.match(/(?<=#)\d+(?=\s)/).to_s
-
- project = pivotal_client.project(params['pivotal_project_id'])
- story = project.story(story_id)
- story_accepted = story.current_state == 'accepted'
- state = story_accepted ? 'success' : 'failure'
-
- options = {
- target_url: story.url,
- description: "Story was #{story_accepted ? '' : 'not'} accepted",
- context: 'continuous-integration/pivotal'
- }
- github_client.create_status(repo, sha, state, options)
- */
-
-const TITLE_PATTERN = /#(\d+)(?=\s)/
+const TITLE_PATTERN = /#(\d+)/
 
 const githubClient = new github()
 githubClient.authenticate({
@@ -68,21 +39,27 @@ function createStatus (repo, owner, sha, projectId, storyNumber) {
     )
 }
 
-exports.githubHook = function (event, context, callback) {
+exports.handler = function (event, context, callback) {
+  body = event.body
   console.log(event.params)
   console.log(event.headers)
-  console.log(event)
+  console.log(body)
 
-  const eventType = event.headers['HTTP_X_GITHUB_EVENT']
+  const eventType = event.headers['X-GitHub-Event']
 
-  const repo = event.repository.name
+  console.log('Beatka')
+  console.log(eventType)
+
+  const repo = body.repository.name
   const projectId = event.params.project_id
 
   if (eventType === 'pull_request') {
-    const prTitle = event.pull_request.title
-    const owner = event.pull_request.head.repo.owner.login
-    const sha = event.pull_request.head.sha
+    const prTitle = body.pull_request.title
+    const owner = body.pull_request.head.repo.owner.login
+    const sha = body.pull_request.head.sha
     const storyNumber = prTitle.match(TITLE_PATTERN)[1]
+
+    console.log(prTitle, owner, sha, storyNumber)
 
     createStatus(repo, owner, sha, projectId, storyNumber)
       .then(res => {
@@ -91,8 +68,8 @@ exports.githubHook = function (event, context, callback) {
       })
 
   } else if (eventType === 'push') {
-    const owner = event.repository.owner.name
-    const sha = event.head_commit.id
+    const owner = body.repository.owner.name
+    const sha = body.head_commit.id
 
     console.log(repo, owner, sha)
 
